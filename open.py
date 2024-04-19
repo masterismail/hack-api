@@ -4,7 +4,7 @@ import os
 app = Flask(__name__)
 
 # Set up OpenAI API key
-
+#openai.api_key = "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"
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 @app.route('/generate', methods=['POST'])
 def generate_text():
