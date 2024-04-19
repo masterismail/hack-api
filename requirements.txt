@@ -3,4 +3,4 @@ uvicorn
 requests
 gunicorn
 flask
-openai
+openai==0.28
