@@ -1,6 +1,1 @@
-fastapi
-uvicorn
-requests
-gunicorn
-flask
-openai==0.28
+#to be filled

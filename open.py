@@ -1,40 +1,21 @@
-from flask import Flask, request, jsonify
-import openai
-import os
-app = Flask(__name__)
+import whisper
 
-# Set up OpenAI API key
-#openai.api_key = "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"
-openai.api_key = os.environ.get("OPENAI_API_KEY")
-@app.route('/generate', methods=['POST'])
-def generate_text():
-    data = request.get_json()
-    prompt = data.get('prompt', '')
-    age = data.get('age', '')
-    company = data.get('company', '')
+model = whisper.load_model("base")
 
-    if not prompt:
-        return jsonify({'error': 'Prompt is required'}), 400
+# load audio and pad/trim it to fit 30 seconds
+audio = whisper.load_audio("/home/tahseer/Desktop/open/test.ogg")
+audio = whisper.pad_or_trim(audio)
 
-    try:
-        messages = [
-            {"role": "system", "content": f"You are responding on behalf of a person with age {age} who works at {company}."},
-            {"role": "user", "content": prompt}
-        ]
+# make log-Mel spectrogram and move to the same device as the model
+mel = whisper.log_mel_spectrogram(audio).to(model.device)
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=messages,
-            max_tokens=256,
-            temperature=1,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-        generated_text = response.choices[0].message.content.strip()
-        return jsonify({'result': generated_text})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+# detect the spoken language
+_, probs = model.detect_language(mel)
+print(f"Detected language: {max(probs, key=probs.get)}")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# decode the audio
+options = whisper.DecodingOptions()
+result = whisper.decode(model, mel, options)
+
+# print the recognized text
+print(result.text)
